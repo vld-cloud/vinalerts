@@ -392,7 +392,10 @@
 <!-- NAV -->
 <nav>
   <a href="#" class="logo">Vin<span>Alerts</span></a>
-  <a href="https://t.me/vinAlerts_bot" class="nav-cta" target="_blank">Essayer gratuitement</a>
+  <div style="display:flex;align-items:center;gap:14px">
+    <a href="#confidentialite" style="color:var(--muted);font-size:13px;text-decoration:none">Confidentialité</a>
+    <a href="https://t.me/vinAlerts_bot" class="nav-cta" target="_blank">Essayer gratuitement</a>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -610,6 +613,36 @@
   </div>
 </section>
 
+<!-- CONFIDENTIALITÉ -->
+<section id="confidentialite" style="background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container" style="max-width:700px">
+    <div class="section-label">Confidentialité & RGPD</div>
+    <h2 class="section-title" style="font-size:clamp(22px,3vw,32px)">Tes données, en toute transparence</h2>
+    <div style="display:flex;flex-direction:column;gap:18px;margin-top:32px;color:var(--muted);font-size:15px;line-height:1.7">
+      <div>
+        <strong style="color:var(--text)">Ce que VinAlerts stocke</strong><br>
+        Uniquement ton identifiant Telegram (un numéro anonyme attribué par Telegram). Aucun nom, aucun email, aucune donnée bancaire n'est collecté ni stocké sur nos serveurs.
+      </div>
+      <div>
+        <strong style="color:var(--text)">Données de paiement</strong><br>
+        Les paiements Premium sont traités par <strong style="color:var(--text)">Stripe</strong>, certifié PCI-DSS. VinAlerts ne voit jamais tes coordonnées bancaires — seul Stripe les traite.
+      </div>
+      <div>
+        <strong style="color:var(--text)">Durée de conservation</strong><br>
+        Tes alertes et ton identifiant sont supprimés dès que tu envoies la commande <code style="background:var(--border);padding:2px 6px;border-radius:4px">/delete</code> dans le bot, ou sur simple demande.
+      </div>
+      <div>
+        <strong style="color:var(--text)">Tes droits (RGPD)</strong><br>
+        Accès, rectification, suppression : envoie un message à <strong style="color:var(--text)">@vinAlerts_bot</strong> sur Telegram. Toute demande est traitée sous 72h.
+      </div>
+      <div>
+        <strong style="color:var(--text)">Cookies</strong><br>
+        Ce site n'utilise aucun cookie de tracking ni publicité. Une simple mesure d'audience anonyme (IP hashée) est effectuée pour améliorer le service.
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CTA FINAL -->
 <section class="cta-section">
   <div class="container">
@@ -624,6 +657,10 @@
 <!-- FOOTER -->
 <footer>
   <p>© 2026 VinAlerts · <a href="https://t.me/vinAlerts_bot">@vinAlerts_bot</a> · Fait avec ❤️ en France</p>
+  <p style="margin-top:10px;font-size:12px;color:#4b5563">
+    VinAlerts n'est pas affilié à Vinted. Vinted est une marque déposée de Vinted UAB. ·
+    <a href="#confidentialite" style="color:#4b5563">Confidentialité</a>
+  </p>
 </footer>
 
 <script>
