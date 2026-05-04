@@ -533,6 +533,25 @@ function toggleFaq(btn) {
     answer.classList.add('open');
   }
 }
+
+// ── Tracking ──────────────────────────────────────────────────────────────────
+const TRACK = 'http://malolechat.ddns.net:8080/vinted_bot/track.php';
+function track(e) {
+  fetch(TRACK + '?e=' + e, { mode: 'no-cors' }).catch(() => {});
+}
+
+// Pageview
+track('pageview');
+
+// Clics CTA → bot
+document.querySelectorAll('a[href*="t.me"]').forEach(function(a) {
+  a.addEventListener('click', function() { track('cta_click'); });
+});
+
+// Clics section pricing
+document.querySelectorAll('.pricing-card a').forEach(function(a) {
+  a.addEventListener('click', function() { track('pricing_click'); });
+});
 </script>
 </body>
 </html>
