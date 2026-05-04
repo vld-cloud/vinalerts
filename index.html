@@ -3,15 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="VinAlerts — Sois le premier alerté dès qu'une annonce Vinted correspond à ta recherche. Gratuit, sans inscription, 100% Telegram.">
-<meta name="keywords" content="vinted, alerte vinted, bot vinted, notification vinted, vinted pas cher">
-<meta property="og:title" content="VinAlerts — Les meilleures annonces Vinted en avant-première">
-<meta property="og:description" content="Reçois une notification Telegram dès qu'une nouvelle annonce Vinted correspond à ta recherche. Avant tout le monde.">
-<meta property="og:image" content="https://vinalerts.vercel.app/og.png">
+<meta name="description" content="Bot Telegram gratuit d'alertes Vinted. Reçois une notification instantanée dès qu'une annonce correspond à ta recherche. 3 alertes gratuites, aucune inscription.">
+<meta name="keywords" content="alerte vinted, bot vinted telegram, notification vinted, vinted nouvelles annonces, bot alerte vinted gratuit, vinted pas cher, vinted alerte prix">
+<meta name="robots" content="index, follow">
+<meta name="author" content="VinAlerts">
+<meta property="og:type" content="website">
+<meta property="og:title" content="VinAlerts — Bot d'alertes Vinted gratuit sur Telegram">
+<meta property="og:description" content="Sois notifié en premier dès qu'une annonce Vinted correspond à ta recherche. Gratuit, sans inscription, 100% Telegram.">
 <meta property="og:url" content="https://vinalerts.vercel.app">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="VinAlerts — Alertes Vinted en temps réel">
+<meta name="twitter:description" content="Bot Telegram gratuit pour être notifié des nouvelles annonces Vinted. Avant tout le monde.">
 <link rel="canonical" href="https://vinalerts.vercel.app">
-<meta name="twitter:card" content="summary_large_image">
-<title>VinAlerts — Alertes Vinted en temps réel</title>
+<title>VinAlerts — Bot Alerte Vinted Gratuit sur Telegram</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "VinAlerts",
+  "url": "https://vinalerts.vercel.app",
+  "description": "Bot Telegram gratuit qui surveille Vinted en temps réel et envoie une notification dès qu'une nouvelle annonce correspond à votre recherche.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Telegram",
+  "inLanguage": "fr",
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Gratuit",
+      "price": "0",
+      "priceCurrency": "EUR"
+    },
+    {
+      "@type": "Offer",
+      "name": "Premium",
+      "price": "1.99",
+      "priceCurrency": "EUR",
+      "billingIncrement": "P1M"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Comment être notifié en premier sur Vinted ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Avec VinAlerts, un bot Telegram gratuit, tu reçois une notification automatique dès qu'une nouvelle annonce Vinted correspond à ta recherche. Le bot scanne Vinted en continu et t'alerte avant tout le monde."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "C'est quoi VinAlerts ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "VinAlerts est un bot Telegram qui surveille Vinted en permanence et t'envoie une notification dès qu'une nouvelle annonce correspond à ta recherche. Plus besoin de rafraîchir Vinted toutes les 5 minutes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Le bot d'alertes Vinted est-il gratuit ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Oui. La version gratuite donne accès à 3 alertes et 30 notifications par jour par alerte. C'est largement suffisant pour surveiller plusieurs recherches. Le Premium (1,99€/mois) lève toutes les limites."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Comment créer une alerte Vinted sur Telegram ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Ouvre @vinAlerts_bot sur Telegram, clique sur Démarrer, puis crée une alerte en saisissant un mot-clé, un prix maximum et une catégorie. Tu reçois tes premières notifications en moins d'une minute."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Puis-je annuler le Premium à tout moment ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Oui, sans engagement. Tu peux annuler depuis ton espace client Stripe à tout moment. Aucune question posée."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Comment fonctionne le paiement Premium ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Le paiement est sécurisé par Stripe. Carte bancaire, Apple Pay et Google Pay acceptés. Tes données bancaires ne sont jamais stockées sur nos serveurs."
+      }
+    }
+  ]
+}
+</script>
 <style>
   :root {
     --bg: #0a0a0f;
@@ -498,6 +586,24 @@
         </button>
         <div class="faq-a">
           Le paiement est sécurisé par Stripe, le leader mondial du paiement en ligne. Carte bancaire, Apple Pay et Google Pay acceptés. Tes données bancaires ne sont jamais stockées sur nos serveurs.
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Comment créer une alerte Vinted sur Telegram ?
+          <span class="arrow">+</span>
+        </button>
+        <div class="faq-a">
+          Ouvre <strong>@vinAlerts_bot</strong> sur Telegram, appuie sur Démarrer, puis tape le mot-clé que tu recherches (ex: "air jordan", "ps5", "manteau laine"). Définis un prix max si tu veux, et c'est parti — tu reçois tes premières notifications en moins d'une minute.
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          VinAlerts fonctionne-t-il pour toutes les catégories Vinted ?
+          <span class="arrow">+</span>
+        </button>
+        <div class="faq-a">
+          Oui. VinAlerts surveille toutes les catégories Vinted France : vêtements homme et femme, chaussures, électronique, jeux vidéo, livres, sport, maison, enfants, animaux et bien d'autres. Tu peux filtrer par catégorie pour affiner tes alertes.
         </div>
       </div>
     </div>
