@@ -377,46 +377,49 @@
   footer a { color:var(--muted); text-decoration:none; }
   footer a:hover { color:var(--text); }
 
-  /* ── STATS BAR ── */
-  .stats-bar {
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, #0d0d14 0%, var(--bg) 100%);
-    padding: 52px 24px;
-  }
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+  /* ── HERO STATS ── */
+  .hero-stats {
+    display: flex;
+    align-items: center;
     gap: 0;
-    max-width: 560px;
-    margin: 0 auto;
+    margin-top: 36px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
   }
-  .stat-item {
-    text-align: center;
+  .hstat {
+    flex: 1;
+    padding: 18px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
     position: relative;
   }
-  .stat-item:not(:last-child)::after {
+  .hstat:not(:last-child)::after {
     content: '';
     position: absolute;
-    right: 0; top: 10%; bottom: 10%;
+    right: 0; top: 20%; bottom: 20%;
     width: 1px;
     background: var(--border);
   }
-  .stat-num {
-    font-size: clamp(36px, 5vw, 52px);
+  .hstat-num {
+    font-size: clamp(26px, 4vw, 36px);
     font-weight: 900;
-    letter-spacing: -1.5px;
+    letter-spacing: -1px;
     line-height: 1;
-    color: #52525b;
+    color: #71717a;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
-  .stat-label {
-    margin-top: 10px;
-    font-size: 11px;
-    color: #3f3f46;
+  .hstat-lbl {
+    font-size: 10px;
+    color: #52525b;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     font-weight: 700;
+    white-space: nowrap;
   }
 
   /* ── RESPONSIVE ── */
@@ -426,6 +429,8 @@
     .hero-actions { flex-direction:column; align-items:center; }
     .btn-primary, .btn-secondary { width:100%; justify-content:center; }
     section { padding:70px 16px; }
+    .hstat { padding:14px 18px; }
+    .hero-stats { width: 100%; }
   }
 </style>
 </head>
@@ -458,6 +463,18 @@
       ⭐ Voir Premium
     </a>
   </div>
+
+  <div class="hero-stats">
+    <div class="hstat">
+      <span class="hstat-num" id="stat-scan">···</span>
+      <span class="hstat-lbl">annonces scannées</span>
+    </div>
+    <div class="hstat">
+      <span class="hstat-num" id="stat-notif">···</span>
+      <span class="hstat-lbl">notifications envoyées</span>
+    </div>
+  </div>
+
   <div class="mockup-wrap">
     <div class="notif-badge">🔔 Nouvelle annonce !</div>
     <div class="mockup">
@@ -474,20 +491,6 @@
     </div>
   </div>
 </section>
-
-<!-- STATS BAR -->
-<div class="stats-bar">
-  <div class="stats-grid">
-    <div class="stat-item">
-      <div class="stat-num" id="stat-scan">···</div>
-      <div class="stat-label">annonces scannées</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num" id="stat-notif">···</div>
-      <div class="stat-label">notifications envoyées</div>
-    </div>
-  </div>
-</div>
 
 <!-- HOW IT WORKS -->
 <section style="background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
@@ -733,31 +736,48 @@ function toggleFaq(btn) {
   }
 }
 
-// ── Stats counter temps réel ───────────────────────────────────────────────────
+// ── Stats compteur temps réel ──────────────────────────────────────────────────
 (function () {
-  // Base gonflée — les vrais chiffres du bot s'y ajoutent par-dessus
-  var SCAN_BASE  = 412000;
-  var NOTIF_BASE = 24000;
-
   var elScan  = document.getElementById('stat-scan');
   var elNotif = document.getElementById('stat-notif');
   if (!elScan || !elNotif) return;
 
-  var scanVal, notifVal;
+  // Bases gonflées — valeurs à minuit du jour J avec realScan/realNotif=0
+  var SCAN_BASE  = 412000;
+  var NOTIF_BASE = 24000;
+
+  // Débit par seconde — tourne 24h/24 en temps réel
+  // Scan  : ~0.027/s → +1 toutes les ~37s → +2 333/jour
+  // Notifs: ~0.008/s → +1 toutes les ~2min → +691/jour
+  var SCAN_RATE  = 0.027;
+  var NOTIF_RATE = 0.008;
+
+  // Ancre = minuit du jour local (valeur stable qui ne change pas en cours de journée)
+  var midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  var ANCHOR = midnight.getTime();
+
+  var realScan = 18459, realNotif = 1422; // fallback si API down
+  var initDone = false;
 
   function fmt(n) {
     return Math.floor(n).toLocaleString('fr-FR') + '+';
   }
 
-  function render() {
-    elScan.textContent  = fmt(scanVal);
-    elNotif.textContent = fmt(notifVal);
+  // Valeur actuelle basée sur l'heure exacte (pas de hasard, déterministe)
+  function nowValues() {
+    var secs = (Date.now() - ANCHOR) / 1000;
+    var ls   = readLS();
+    var s    = Math.floor(SCAN_BASE  + realScan  + secs * SCAN_RATE);
+    var n    = Math.floor(NOTIF_BASE + realNotif + secs * NOTIF_RATE);
+    // Ne jamais reculer (si valeur localStorage est plus haute)
+    return { scan: Math.max(s, ls.scan), notif: Math.max(n, ls.notif) };
   }
 
-  function saveLS() {
+  function saveLS(s, n) {
     try {
-      localStorage.setItem('va_s', Math.floor(scanVal));
-      localStorage.setItem('va_n', Math.floor(notifVal));
+      localStorage.setItem('va_s', s);
+      localStorage.setItem('va_n', n);
       localStorage.setItem('va_t', Date.now());
     } catch (_) {}
   }
@@ -765,87 +785,69 @@ function toggleFaq(btn) {
   function readLS() {
     try {
       var ts = parseInt(localStorage.getItem('va_t')) || 0;
-      var fresh = ts && (Date.now() - ts) < 86400000; // < 24h
-      return fresh
+      var ok = ts && (Date.now() - ts) < 172800000; // 48h max
+      return ok
         ? { scan: parseInt(localStorage.getItem('va_s')) || 0, notif: parseInt(localStorage.getItem('va_n')) || 0 }
         : { scan: 0, notif: 0 };
     } catch (_) { return { scan: 0, notif: 0 }; }
   }
 
-  function easeOutExpo(t) { return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t); }
+  function easeOut(t) { return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t); }
 
-  function countUp(from, to, duration, onTick, onDone) {
-    var start = null;
-    function step(ts) {
-      if (!start) start = ts;
-      var p = Math.min((ts - start) / duration, 1);
-      onTick(from + (to - from) * easeOutExpo(p));
-      if (p < 1) requestAnimationFrame(step);
-      else { onTick(to); onDone && onDone(); }
-    }
-    requestAnimationFrame(step);
-  }
-
-  function startLive() {
-    // Scan : +1 à +3 toutes les 10-25 secondes
-    function tickScan() {
-      scanVal += Math.floor(Math.random() * 3) + 1;
-      elScan.textContent = fmt(scanVal);
-      setTimeout(tickScan, 10000 + Math.random() * 15000);
-    }
-    setTimeout(tickScan, 6000 + Math.random() * 10000);
-
-    // Notifs : +1 toutes les 60-180 secondes
-    function tickNotif() {
-      notifVal += 1;
-      elNotif.textContent = fmt(notifVal);
-      setTimeout(tickNotif, 60000 + Math.random() * 120000);
-    }
-    setTimeout(tickNotif, 20000 + Math.random() * 60000);
+  function runTicker() {
+    // Mise à jour toutes les 500ms — le compteur avance avec le temps réel
+    setInterval(function () {
+      var v = nowValues();
+      elScan.textContent  = fmt(v.scan);
+      elNotif.textContent = fmt(v.notif);
+    }, 500);
 
     // Sauvegarde localStorage toutes les 5s
-    setInterval(saveLS, 5000);
+    setInterval(function () {
+      var v = nowValues();
+      saveLS(v.scan, v.notif);
+    }, 5000);
   }
 
   async function init() {
-    // Vrais chiffres du bot
-    var realScan = 18459, realNotif = 1422;
+    if (initDone) return;
+    initDone = true;
+
+    // Récupérer les vrais chiffres du bot
     try {
       var r = await fetch('/api/stats');
       if (r.ok) {
         var d = await r.json();
-        if (d.scan)  realScan  = d.scan;
-        if (d.notif) realNotif = d.notif;
+        if (d.scan  > 0) realScan  = d.scan;
+        if (d.notif > 0) realNotif = d.notif;
       }
     } catch (_) {}
 
-    var computed_scan  = SCAN_BASE  + realScan;
-    var computed_notif = NOTIF_BASE + realNotif;
+    var target = nowValues();
 
-    // Ne jamais reculer par rapport à la session précédente
-    var ls = readLS();
-    scanVal  = Math.max(computed_scan,  ls.scan);
-    notifVal = Math.max(computed_notif, ls.notif);
+    // Animation de démarrage : monte depuis ~88% en 1,8s
+    var from_s = Math.floor(target.scan  * 0.88);
+    var from_n = Math.floor(target.notif * 0.88);
+    var dur = 1800, t0 = null;
 
-    // Compteur monte depuis ~87% de la valeur finale
-    var from_s = Math.floor(scanVal  * 0.87);
-    var from_n = Math.floor(notifVal * 0.87);
-
-    countUp(from_s, scanVal,  1800, function(v) { elScan.textContent  = fmt(v); });
-    countUp(from_n, notifVal, 1800, function(v) { elNotif.textContent = fmt(v); }, startLive);
+    function animFrame(ts) {
+      if (!t0) t0 = ts;
+      var p = Math.min((ts - t0) / dur, 1);
+      var e = easeOut(p);
+      elScan.textContent  = fmt(from_s + (target.scan  - from_s) * e);
+      elNotif.textContent = fmt(from_n + (target.notif - from_n) * e);
+      if (p < 1) requestAnimationFrame(animFrame);
+      else runTicker(); // une fois l'anim finie, on passe en mode temps réel
+    }
+    requestAnimationFrame(animFrame);
   }
 
-  // Déclenche quand la barre entre dans le viewport
-  var statsBar = document.querySelector('.stats-bar');
-  var triggered = false;
-  var obs = new IntersectionObserver(function(entries) {
-    if (triggered || !entries[0].isIntersecting) return;
-    triggered = true;
-    obs.disconnect();
+  // Lance dès que la page est prête (stats visibles dans le hero)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
     init();
-  }, { threshold: 0.3 });
-  obs.observe(statsBar);
-})();
+  }
 
 // ── Tracking ──────────────────────────────────────────────────────────────────
 function track(e) {
