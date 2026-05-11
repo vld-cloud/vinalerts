@@ -742,51 +742,34 @@ function toggleFaq(btn) {
   var elNotif = document.getElementById('stat-notif');
   if (!elScan || !elNotif) return;
 
-  // Bases gonflées — valeurs à minuit du jour J avec realScan/realNotif=0
-  var SCAN_BASE  = 412000;
-  var NOTIF_BASE = 24000;
+  var SCAN_BASE  = 412000;   // base gonflée scans
+  var NOTIF_BASE = 24000;    // base gonflée notifs
+  var SCAN_RATE  = 0.027;    // +1 toutes les ~37s, +2 333/jour
+  var NOTIF_RATE = 0.008;    // +1 toutes les ~2min, +691/jour
 
-  // Débit par seconde — tourne 24h/24 en temps réel
-  // Scan  : ~0.027/s → +1 toutes les ~37s → +2 333/jour
-  // Notifs: ~0.008/s → +1 toutes les ~2min → +691/jour
-  var SCAN_RATE  = 0.027;
-  var NOTIF_RATE = 0.008;
-
-  // Ancre = minuit du jour local (valeur stable qui ne change pas en cours de journée)
-  var midnight = new Date();
-  midnight.setHours(0, 0, 0, 0);
+  var midnight = new Date(); midnight.setHours(0, 0, 0, 0);
   var ANCHOR = midnight.getTime();
 
-  var realScan = 18459, realNotif = 1422; // fallback si API down
-  var initDone = false;
+  var realScan = 18459, realNotif = 1422;
 
-  function fmt(n) {
-    return Math.floor(n).toLocaleString('fr-FR') + '+';
-  }
+  function fmt(n) { return Math.floor(n).toLocaleString('fr-FR') + '+'; }
 
-  // Valeur actuelle basée sur l'heure exacte (pas de hasard, déterministe)
   function nowValues() {
     var secs = (Date.now() - ANCHOR) / 1000;
-    var ls   = readLS();
-    var s    = Math.floor(SCAN_BASE  + realScan  + secs * SCAN_RATE);
-    var n    = Math.floor(NOTIF_BASE + realNotif + secs * NOTIF_RATE);
-    // Ne jamais reculer (si valeur localStorage est plus haute)
-    return { scan: Math.max(s, ls.scan), notif: Math.max(n, ls.notif) };
+    var ls = readLS();
+    return {
+      scan:  Math.max(Math.floor(SCAN_BASE  + realScan  + secs * SCAN_RATE),  ls.scan),
+      notif: Math.max(Math.floor(NOTIF_BASE + realNotif + secs * NOTIF_RATE), ls.notif)
+    };
   }
 
   function saveLS(s, n) {
-    try {
-      localStorage.setItem('va_s', s);
-      localStorage.setItem('va_n', n);
-      localStorage.setItem('va_t', Date.now());
-    } catch (_) {}
+    try { localStorage.setItem('va_s', s); localStorage.setItem('va_n', n); localStorage.setItem('va_t', Date.now()); } catch (_) {}
   }
-
   function readLS() {
     try {
       var ts = parseInt(localStorage.getItem('va_t')) || 0;
-      var ok = ts && (Date.now() - ts) < 172800000; // 48h max
-      return ok
+      return (ts && Date.now() - ts < 172800000)
         ? { scan: parseInt(localStorage.getItem('va_s')) || 0, notif: parseInt(localStorage.getItem('va_n')) || 0 }
         : { scan: 0, notif: 0 };
     } catch (_) { return { scan: 0, notif: 0 }; }
@@ -794,60 +777,53 @@ function toggleFaq(btn) {
 
   function easeOut(t) { return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t); }
 
-  function runTicker() {
-    // Mise à jour toutes les 500ms — le compteur avance avec le temps réel
+  // Mini count-up de 350ms quand un chiffre monte
+  function animTick(el, from, to) {
+    var dur = 350, t0 = null;
+    (function step(ts) {
+      if (!t0) t0 = ts;
+      var p = Math.min((ts - t0) / dur, 1);
+      el.textContent = fmt(from + (to - from) * easeOut(p));
+      if (p < 1) requestAnimationFrame(step);
+    })(performance.now());
+  }
+
+  // Ticker continu — repart des valeurs finales de l'anim de démarrage
+  function runTicker(initScan, initNotif) {
+    var lastS = initScan, lastN = initNotif;
+
     setInterval(function () {
       var v = nowValues();
-      elScan.textContent  = fmt(v.scan);
-      elNotif.textContent = fmt(v.notif);
+      if (v.scan  !== lastS) { animTick(elScan,  lastS, v.scan);  lastS = v.scan;  }
+      if (v.notif !== lastN) { animTick(elNotif, lastN, v.notif); lastN = v.notif; }
     }, 500);
 
-    // Sauvegarde localStorage toutes les 5s
-    setInterval(function () {
-      var v = nowValues();
-      saveLS(v.scan, v.notif);
-    }, 5000);
+    setInterval(function () { var v = nowValues(); saveLS(v.scan, v.notif); }, 5000);
   }
 
   async function init() {
-    if (initDone) return;
-    initDone = true;
-
-    // Récupérer les vrais chiffres du bot
     try {
       var r = await fetch('/api/stats');
-      if (r.ok) {
-        var d = await r.json();
-        if (d.scan  > 0) realScan  = d.scan;
-        if (d.notif > 0) realNotif = d.notif;
-      }
+      if (r.ok) { var d = await r.json(); if (d.scan > 0) realScan = d.scan; if (d.notif > 0) realNotif = d.notif; }
     } catch (_) {}
 
     var target = nowValues();
-
-    // Animation de démarrage : monte depuis ~88% en 1,8s
     var from_s = Math.floor(target.scan  * 0.88);
     var from_n = Math.floor(target.notif * 0.88);
     var dur = 1800, t0 = null;
 
-    function animFrame(ts) {
+    (function animFrame(ts) {
       if (!t0) t0 = ts;
-      var p = Math.min((ts - t0) / dur, 1);
-      var e = easeOut(p);
+      var p = Math.min((ts - t0) / dur, 1), e = easeOut(p);
       elScan.textContent  = fmt(from_s + (target.scan  - from_s) * e);
       elNotif.textContent = fmt(from_n + (target.notif - from_n) * e);
       if (p < 1) requestAnimationFrame(animFrame);
-      else runTicker(); // une fois l'anim finie, on passe en mode temps réel
-    }
-    requestAnimationFrame(animFrame);
+      else runTicker(target.scan, target.notif); // passe les valeurs finales au ticker
+    })(performance.now());
   }
 
-  // Lance dès que la page est prête (stats visibles dans le hero)
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 
 // ── Tracking ──────────────────────────────────────────────────────────────────
